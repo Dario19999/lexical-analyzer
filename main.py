@@ -10,16 +10,16 @@ operators = {
   '*':'Op. Producto'
 }
 
-digit_regex = r'([0-9])'
+digit_regex = r'(\d)'
 alpha_regex = r'([a-z_])'
 operator_regex = r'(\+|-|\*|/|=)'
 
-variable_regex = r'(_*[a-z]+[0-9_]*)'
-arithmetic_exp_regex = r'^\w(?:[+\-*/]\w)+'
-real_number_regex = r'([0-9]*\.[0-9]+)'
-whole_number_regex = r'([0-9]+)'
-whole_exponent_regex = r'([0-9]+E(\+|-)[0-9]+)'
-real_exponent_regex = r'(\d*\.\d*E(\+|-)[0-9]+)'
+variable_regex = r'(_*[a-z]+[\d_]*)'
+arithmetic_exp_regex = r'^[+-\/*]?\d*\.?\d+(?:[-+*\/][+\-*]?\d*\.?\d+[+\-*/]?)+$'
+real_number_regex = r'(\d*\.\d+)'
+whole_number_regex = r'(\d+)'
+whole_exponent_regex = r'((?<!\.)\d+E(\+|-)\d+)'
+real_exponent_regex = r'(\d*\.\d*E(\+|-)\d+)'
 
 states = {
   0: 'q0',
@@ -113,8 +113,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 if string == '':
                   return
             
-    print(string, 'no es una cadena válida')
-              
+    print(string, 'no es una cadena válida')      
     
   def start_analyzer(self):
     global transition_table, token, state
@@ -194,12 +193,16 @@ class MainWindow(QtWidgets.QMainWindow):
           for exp in exponents:
             token = self.determine_general_token(exp[0])
             data.append((exp[0], token))
-        data.append((arith_exp, self.determine_general_token(arith_exp)))  
+            
+        data.append((arith_exp, self.determine_general_token(arith_exp)))
+        data.append(('','','','',''))
       else:
-        if re.match(arithmetic_exp_regex, line):
-          new_line = re.sub(real_exponent_regex, '' , line)
-          clean_line = re.sub(whole_exponent_regex, '' , new_line)
+        new_line = re.sub(real_exponent_regex, '' , line)
+        clean_line = re.sub(whole_exponent_regex, '' , new_line)
+        if re.search(arithmetic_exp_regex, clean_line):
           general_strings = re.split('=|\+|-|\*|/', clean_line)
+          token = self.determine_general_token(clean_line)
+          data.append((line, token))
           for expr in general_strings:
             if expr != '':
               token = self.determine_general_token(expr)
@@ -217,15 +220,14 @@ class MainWindow(QtWidgets.QMainWindow):
             token = self.determine_general_token(exp[0])
             data.append((exp[0], token))
 
-        
-        token = self.determine_general_token(line)
-        data.append((line, token))
+        if re.match(variable_regex, line):
+          token = self.determine_general_token(line)
+          data.append((line, token))
+          
         data.append(('','','','',''))
     
     self.print_token_table(data)
     
-  
-
   def print_token_table(self, data):
     
     row = 0
