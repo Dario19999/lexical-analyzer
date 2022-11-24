@@ -3,11 +3,11 @@ from PyQt5.QtGui import *
 import sys, os, re
 
 operators = {
-  '=':'Asignación',
-  '+':'Adición',
-  '-':'Sustracción',
-  '/':'División',
-  '*':'Producto'
+  '=':'Op. Asignación',
+  '+':'Op. Adición',
+  '-':'Op. Sustracción',
+  '/':'Op. División',
+  '*':'Op. Producto'
 }
 
 digit_regex = r'([0-9])'
@@ -140,7 +140,10 @@ class MainWindow(QtWidgets.QMainWindow):
           data.append((char, token, "-", "-", "No Válido"))
           self.print_analysis_table(data)
           break
-
+        
+        if character == 2:
+          token = operators[char]
+          
         data.append((char, token, states[current], states[state], "Válido"))
       
         print('Estado actual:', states[current], 'Siguiente:', states[state], '| Caracter:', char, '| Token:', token)
