@@ -3,7 +3,6 @@ from PyQt5.QtGui import *
 import sys, os, re
 
 operators = {
-  '=':'Op. Asignación',
   '+':'Op. Adición',
   '-':'Op. Sustracción',
   '/':'Op. División',
@@ -12,12 +11,12 @@ operators = {
 
 digit_regex = r'(\d)'
 alpha_regex = r'([a-z_])'
-operator_regex = r'(\+|-|\*|/|=)'
+operator_regex = r'(\+|-|\*|/)'
 
-variable_regex = r'(_*[a-z]+[\d_]*)'
-arithmetic_exp_regex = r'^[+-\/*]?\d*\.?\d+(?:[-+*\/][+\-*]?\d*\.?\d+[+\-*/]?)+$'
-real_number_regex = r'(\d*\.\d+)'
-whole_number_regex = r'(\d+)'
+variable_regex = r'^(_*[a-z]+[\d_]*(?! [+-]))$'
+arithmetic_exp_regex = r'^[+\-\/*]?\d*\.?\d+(?:[+\-*/]?\d*\.?\d+[+\-*/]?)+$'
+real_number_regex = r'(^[+-]?\d*\.\d+$)'
+whole_number_regex = r'(^[+-]?\d+$)'
 whole_exponent_regex = r'((?<!\.)\d+E(\+|-)\d+)'
 real_exponent_regex = r'(\d*\.\d*E(\+|-)\d+)'
 
@@ -31,20 +30,22 @@ states = {
   6: 'q6',
   7: 'q7',
   8: 'q8',
-  9: 'q9'
+  9: 'q9',
+  10: 'q10'
 }
 
 transition_table = [
     [6, 1, 2, -1, -1, -1],
-    [-1, 1, 4, 3, 7, -2],
+    [6, 1, 4, 3, 7, -2],
     [-1, 1, -1, -1, -1, -1],
     [-1, 5, -1, -1, -1, -1],
     [-1, 1, -1, -1, -1, -1],
     [-1, 5, 4, -1, 7, -2],
-    [6, 6, 1, -1, -1, -2],
+    [6, 10, -1, -1, -1, -2],
     [-1, -1, 8, -1, -1, -1],
     [-1, 9, -1, -1, -1, -1],
-    [-1, 9, 1, -1, -1, -2],
+    [-1, 9, 4, -1, -1, -2],
+    [-1, 1, -1, -1, -1, -2]
   ]
 
 token = ''
@@ -53,8 +54,8 @@ class MainWindow(QtWidgets.QMainWindow):
   def __init__(self):
     QtWidgets.QMainWindow.__init__(self)
     
-    ui_path = os.path.dirname(os.path.abspath(__file__))
-    self.ui = uic.loadUi(os.path.join(ui_path, 'UI.ui'), self)
+    ui_path = os.path.abspath("UI.ui")
+    self.ui = uic.loadUi(ui_path, self)
     
     self.analizar_btn.clicked.connect(self.start_analyzer)
     
@@ -113,7 +114,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 if string == '':
                   return
             
-    print(string, 'no es una cadena válida')      
+    return 'no válida'  
     
   def start_analyzer(self):
     global transition_table, token, state
@@ -137,27 +138,24 @@ class MainWindow(QtWidgets.QMainWindow):
         if state == -1: 
           print(char, 'No es un caracter válido')
           data.append((char, token, "-", "-", "No Válido"))
-          self.print_analysis_table(data)
-          break
         
         if character == 2:
           token = operators[char]
           
-        data.append((char, token, states[current], states[state], "Válido"))
+        if (state != -1) & (current != -1): data.append((char, token, states[current], states[state], "Válido"))
       
-        print('Estado actual:', states[current], 'Siguiente:', states[state], '| Caracter:', char, '| Token:', token)
-      if state == -1: break
       data.append(('','','','',''))
       
     if state == -1:
       print("Cadena No Válida")
-    else:
-      self.print_analysis_table(data)
-      self.start_tokenizer()
+
+    self.print_analysis_table(data)
       
     if state == 9:
       print("Cadena Válida")
       
+    self.start_tokenizer()
+    
   def start_tokenizer(self): 
     data = []
     
@@ -167,65 +165,73 @@ class MainWindow(QtWidgets.QMainWindow):
     for line in source_list:
     
         
-      if re.search('=',line):
+      # if re.search('=',line):
         
-        arith_exp = re.split('=', line)[1]
+      #   arith_exp = re.split('=', line)[1]
         
-        new_line = re.sub(real_exponent_regex, '' , arith_exp)
-        clean_line = re.sub(whole_exponent_regex, '' , new_line)
+      #   new_line = re.sub(real_exponent_regex, '' , arith_exp)
+      #   clean_line = re.sub(whole_exponent_regex, '' , new_line)
         
-        full_line = re.split('=', line)[0]+'='+clean_line
-        general_strings = re.split('=|\+|-|\*|/', full_line)
+      #   full_line = re.split('=', line)[0]+'='+clean_line
+      #   general_strings = re.split('=|\+|-|\*|/', full_line)
         
+      #   for expr in general_strings:
+      #     if expr != '':
+      #       token = self.determine_general_token(expr)
+      #       if expr != '': data.append((expr, token))           
+      
+      #   if re.search(real_exponent_regex, line):
+      #     real_exponents = re.findall(real_exponent_regex, line)
+      #     for exp in real_exponents:
+      #       token = self.determine_general_token(exp[0])
+      #       data.append((exp[0], token))
+
+      #   if re.search(whole_exponent_regex, line):
+      #     exponents = re.findall(whole_exponent_regex, line)
+      #     for exp in exponents:
+      #       token = self.determine_general_token(exp[0])
+      #       data.append((exp[0], token))
+            
+      #   data.append((arith_exp, self.determine_general_token(arith_exp)))
+      #   data.append(('','','','',''))
+      # else:
+      new_line = re.sub(real_exponent_regex, '' , line)
+      clean_line = re.sub(whole_exponent_regex, '' , new_line)
+      if re.search(arithmetic_exp_regex, clean_line):
+        general_strings = re.split('\+|-|\*|/', clean_line)
+        token = self.determine_general_token(clean_line)
+        data.append((line, token))
         for expr in general_strings:
           if expr != '':
             token = self.determine_general_token(expr)
-            if expr != '': data.append((expr, token))           
+            if expr != '': data.append((expr, token))
       
-        if re.search(real_exponent_regex, line):
-          real_exponents = re.findall(real_exponent_regex, line)
-          for exp in real_exponents:
-            token = self.determine_general_token(exp[0])
-            data.append((exp[0], token))
-
-        if re.search(whole_exponent_regex, line):
-          exponents = re.findall(whole_exponent_regex, line)
-          for exp in exponents:
-            token = self.determine_general_token(exp[0])
-            data.append((exp[0], token))
-            
-        data.append((arith_exp, self.determine_general_token(arith_exp)))
-        data.append(('','','','',''))
-      else:
-        new_line = re.sub(real_exponent_regex, '' , line)
-        clean_line = re.sub(whole_exponent_regex, '' , new_line)
-        if re.search(arithmetic_exp_regex, clean_line):
-          general_strings = re.split('=|\+|-|\*|/', clean_line)
-          token = self.determine_general_token(clean_line)
-          data.append((line, token))
-          for expr in general_strings:
-            if expr != '':
-              token = self.determine_general_token(expr)
-              if expr != '': data.append((expr, token))
+      if re.search(real_exponent_regex, line):
+        real_exponents = re.findall(real_exponent_regex, line)
+        for exp in real_exponents:
+          token = self.determine_general_token(exp[0])
+          data.append((exp[0], token))
+      
+      if re.search(whole_exponent_regex, line):
+        exponents = re.findall(whole_exponent_regex, line)
+        for exp in exponents:
+          token = self.determine_general_token(exp[0])
+          data.append((exp[0], token))
+      
+      if re.search(whole_number_regex, line):
+        token = self.determine_general_token(line)
+        data.append((line, token))
+      
+      if re.search(real_number_regex, line):
+        token = self.determine_general_token(line)
+        data.append((line, token))
+      
+      if re.match(variable_regex, line):
+        token = self.determine_general_token(line)
+        data.append((line, token))
         
-        if re.search(real_exponent_regex, line):
-          real_exponents = re.findall(real_exponent_regex, line)
-          for exp in real_exponents:
-            token = self.determine_general_token(exp[0])
-            data.append((exp[0], token))
-
-        if re.search(whole_exponent_regex, line):
-          exponents = re.findall(whole_exponent_regex, line)
-          for exp in exponents:
-            token = self.determine_general_token(exp[0])
-            data.append((exp[0], token))
-
-        if re.match(variable_regex, line):
-          token = self.determine_general_token(line)
-          data.append((line, token))
-          
-        data.append(('','','','',''))
-    
+      data.append(('','','','',''))
+  
     self.print_token_table(data)
     
   def print_token_table(self, data):
