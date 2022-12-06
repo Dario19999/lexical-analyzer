@@ -14,7 +14,7 @@ alpha_regex = r'([a-z_])'
 operator_regex = r'(\+|-|\*|/)'
 
 variable_regex = r'^(_*[a-z]+[\d_]*(?! [+-]))$'
-arithmetic_exp_regex = r'^[+\-\/*]?\d*\.?\d+(?:[+\-*/]?\d*\.?\d+[+\-*/]?)+$'
+arithmetic_exp_regex = r'^-?\d+(?=[\+\-\/\*])(\.\d+)?([\+\-\*\/]\d+(\.\d+)?)*$'
 real_number_regex = r'(^[+-]?\d*\.\d+$)'
 whole_number_regex = r'(^[+-]?\d+$)'
 whole_exponent_regex = r'((?<!\.)\d+E(\+|-)\d+)'
